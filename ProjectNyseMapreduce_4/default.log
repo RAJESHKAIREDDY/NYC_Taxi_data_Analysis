@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE log SYSTEM "logger.dtd">
+<log>
+<record>
+  <date>2022-12-11T23:59:32.444726937Z</date>
+  <millis>1670803172444</millis>
+  <nanos>726937</nanos>
+  <sequence>0</sequence>
+  <logger>com.javacodegeeks.snippets.core</logger>
+  <level>INFO</level>
+  <class>neu.edu.Driver</class>
+  <method>main</method>
+  <thread>1</thread>
+  <message>severe message</message>
+</record>
+</log>
+Dec 11, 2022 7:02:45 PM neu.edu.Driver main
+INFO: severe message
