@@ -1,0 +1,295 @@
+
+Pig Analysis for dropoff Locations
+--------------------------------------------------------------------------------------------------------------------
+1.average amount for every week
+2. drivers with max/min  distance travelled.
+3. most number of drop_off locations ID
+4. peakdays for dropoff locations
+5. peak hours for dropoff locations with dropff_area
+6. shortest and longest distance with locationsID ,dropoff_street,dropoff_area
+7. peak hours for shortest and longest distant locations.
+
+
+-----------------------------------------------------
+1.average amount for every week
+
+users = LOAD'hdfs://localhost:9000/Project/MapReduce1/Input/hive_dataset.csv' USING PigStorage(',') AS
+(VendorID:Int,pickup_date:chararray,pickup_time:chararray,pickup_month:chararray,pickup_day:chararray,dropoff_date:chararray,dropoff_time:chararray,dropoff_month:chararray,dropoff_day:chararray,passenger_count:int,
+trip_distance:float,RatecodeID :int,PULocationID:int,PickUp_Street:chararray,PickUp_Area:chararray,PickUp_ServiceZone:chararray,DOLocationID:int,DropOff_Street:chararray,DropOff_Area:chararray,
+DropOff_ServiceZone:chararray,payment_type:int,
+total_amount:float);
+
+weekAverage = FOREACH users GENERATE dropoff_day,total_amount;
+A = GROUP weekAverage BY (dropoff_day);
+B =  FOREACH A GENERATE $0,AVG(weekAverage.total_amount) AS AVG_AMOUNT;
+C = ORDER B BY AVG_AMOUNT DESC;
+STORE C INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/weekly_avg_amount.csv'
+
+
+Thursday	16.815014758489795
+Friday	16.596112680771895
+Wednesday	16.457607950485034
+Monday	16.433042609220074
+Tuesday	16.35055939916606
+Sunday	16.163102075495292
+Saturday	15.327593190425535 
+
+Thursday and friday tops the list for average_total_amount_weekly sales
+-------------------------------------------------------------------------------------------------------------
+2)a.drivers with max distance travelled.
+
+timeList = FOREACH users GENERATE VendorID,PickUp_Street,PickUp_Area,DropOff_Street,DropOff_Area,trip_distance;
+ A = GROUP timeList BY(VendorID,PickUp_Street,PickUp_Area,DropOff_Street,DropOff_Area);
+ B= FOREACH A GENERATE $0,MAX(timeList.trip_distance) AS Max_distance;
+ C= ORDER B BY Max_distance DESC;
+alias = LIMIT C  10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/VENDOR_ID_MAX_distance.csv';
+
+
+(2,Queens,Flushing Meadows-Corona Park,Unknown,NA)	213.2
+(2,Brooklyn,Bay Ridge,Unknown,NA)	119.23
+(2,Manhattan,Clinton East,Unknown,NA)	112.8
+(2,Queens,JFK Airport,Unknown,NA)	94.87
+(2,Queens,Baisley Park,Queens,JFK Airport)	94.53
+(1,Queens,JFK Airport,Unknown,NA)	91.9
+(2,Queens,South Ozone Park,Unknown,NA)	86.82
+(2,Manhattan,Midtown Center,Unknown,NA)	75.91
+(2,Bronx,Norwood,Unknown,NA)	75.84
+(2,Manhattan,Clinton East,Manhattan,Times Sq/Theatre District)	72.28
+
+max distance for vendorID 2 is 213.2 and for vendorID 1 is 91.9
+--------------------------------------------------------------------------------------------------------
+2)b.drivers with min distance tavelled
+
+timeList = FOREACH users GENERATE VendorID,PickUp_Street,PickUp_Area,DropOff_Street,DropOff_Area,trip_distance;
+ A = GROUP timeList BY(VendorID,PickUp_Street,PickUp_Area,DropOff_Street,DropOff_Area);
+ B= FOREACH A GENERATE $0,MIN(timeList.trip_distance) AS Min_distance;
+ C= ORDER B BY Min_distance ASC;
+alias = LIMIT C 10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/VENDOR_ID_MIN_distance.csv';
+
+(2,Unknown,NV,Manhattan,Manhattan Valley)	0.01
+(2,Brooklyn,Park Slope,Brooklyn,Park Slope)	0.01
+(2,Unknown,NV,Manhattan,Lenox Hill West)	0.01
+(2,Brooklyn,Boerum Hill,Brooklyn,Boerum Hill)	0.01
+(2,Manhattan,Garment District,Manhattan,Garment District)	0.01
+(2,Unknown,NV,Manhattan,Midtown Center)	0.01
+(1,Manhattan,Morningside Heights,Manhattan,Morningside Heights)	0.01
+(2,Manhattan,Financial District North,Manhattan,Financial District North)	0.01
+(2,Unknown,NV,Manhattan,Midtown South)	0.01
+(2,Unknown,NV,Manhattan,Midtown East)	0.01
+
+min distance is same for vendorid 1& 2;
+------------------------------------------------------------------------------------------------------------------
+3.most number of drop_off locations ID
+
+1.locationsID =   FOREACH users GENERATE DOLocationID,DropOff_Street,DropOff_Area;
+2.A = GROUP locationsID BY (DropOff_Street,DropOff_Area);
+3.B = FOREACH A GENERATE $0, COUNT(locationsID.DOLocationID) AS DropOff_locationsID_count;
+4.C = ORDER B BY DropOff_locationsID_count DESC;
+alias = LIMIT C 10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/dropoff_locations_count.csv';
+
+
+(Manhattan,Upper East Side North)	22755
+(Manhattan,Midtown Center)	22491
+(Manhattan,Upper East Side South)	21010
+(Manhattan,Murray Hill)	18643
+(Manhattan,Times Sq/Theatre District)	18219
+(Manhattan,Midtown East)	18129
+(Manhattan,Clinton East)	16109
+(Manhattan,Lincoln Square East)	15828
+(Manhattan,Union Sq)	15789
+(Manhattan,Penn Station/Madison Sq West)	15540
+
+Note:- 
+(Manhattan,Upper East Side North)	22755 tops the list with most number of dropoff locations
+------------------------------------------------------------------------------------------------------------------
+4.peakdays for dropoff locations
+
+peakdays = FOREACH users GENERATE DropOff_Street,DropOff_Area,dropoff_day;
+A = GROUP peakdays BY (DropOff_Street,DropOff_Area,dropoff_day);
+B = FOREACH A GENERATE $0, COUNT(peakdays.dropoff_day) AS DropOff_days;
+C =  ORDER B BY DropOff_days DESC;
+alias = LIMIT C 5;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/peakdays_dropoff_locations.csv';
+(Manhattan,Midtown Center,Thursday)	3835
+(Manhattan,Midtown Center,Wednesday)	3789
+(Manhattan,Midtown Center,Tuesday)	3788
+(Manhattan,Upper East Side North,Tuesday)	3647
+(Manhattan,Upper East Side North,Wednesday)	3633
+
+(Manhattan,Midtown Center,Thursday)	3835 
+-----------------------------------------------------------------------------------------------------------------
+5.peak hours for dropoff locations with dropff_area
+
+peakhours = FOREACH users GENERATE dropoff_time;
+A = GROUP peakhours BY dropoff_time;
+B = FOREACH A GENERATE $0, COUNT(peakhours.dropoff_time) AS DropOff_hours_count;
+C = ORDER B BY DropOff_hours_count DESC;
+alias = LIMIT C 10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/peak_hours.csv';
+
+6:58 PM	707
+6:53 PM	686
+7:01 PM	685
+7:19 PM	679
+7:14 PM	676
+6:47 PM	674
+7:07 PM	671
+6:55 PM	670
+7:00 PM	668
+7:27 PM	666                                       
+
+peakhours for drop_off dirves are 6:45 pm-7:30pm
+-----------------------------------------------------------------------------------------------
+5:21 AM	47
+5:07 AM	57
+5:06 AM	57
+5:14 AM	58
+5:12 AM	59
+5:10 AM	60
+5:20 AM	61
+5:13 AM	63
+5:18 AM	63
+5:19 AM	64
+off peak_hours for dropoff drives is 5-5:30 AM
+-----------------------------------------------------------------------------------------
+5)b.peak hours for location wise.
+
+peakhours = FOREACH users GENERATE DropOff_Street,DropOff_Area,dropoff_time;
+A = GROUP peakhours BY (DropOff_Street,DropOff_Area,dropoff_time);
+B = FOREACH A GENERATE $0, COUNT(peakhours.dropoff_time) AS DropOff_hours_count;
+C = ORDER B BY DropOff_hours_count DESC;
+alias = LIMIT C 10;
+
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/peak_hours_locations.csv';
+
+(Manhattan,Midtown Center,7:53 AM)	46
+(Manhattan,Upper East Side North,6:48 PM)	44
+(Manhattan,Midtown Center,8:36 AM)	44
+(Manhattan,Midtown Center,9:51 AM)	43
+(Manhattan,Midtown Center,9:34 AM)	43
+(Manhattan,Midtown Center,7:49 AM)	42
+(Manhattan,Midtown Center,10:01 AM)	42
+(Manhattan,Midtown Center,7:52 AM)	42
+(Manhattan,Midtown Center,8:04 AM)	42
+(Manhattan,Midtown Center,7:13 AM)	42
+
+peak hours for manhattan-midtown center 7:00-10:00AM and for (Manhattan,Upper East Side North,6:48 PM)
+--------------------------------------------------------------------------------------------------------
+5)c.off peak hours for location wise.
+C = ORDER B BY DropOff_hours_count ASC;
+alias = LIMIT C 10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/off_peak_hours_locations.csv';
+
+(Manhattan,Bloomingdale,8:14 AM)	1
+(Manhattan,Bloomingdale,8:16 AM)	1
+(Bronx,Mott Haven/Port Morris,3:02 PM)	1
+(Manhattan,SoHo,8:22 AM)	1
+(Bronx,Mott Haven/Port Morris,2:57 PM)	1
+(Manhattan,Bloomingdale,8:27 AM)	1
+(Bronx,Mott Haven/Port Morris,2:53 AM)	1
+(Manhattan,Bloomingdale,8:29 AM)	1
+(Manhattan,Bloomingdale,8:30 AM)	1
+(Manhattan,Bloomingdale,8:32 PM)	1
+
+off peak hours for dropoff is around 8:00-8:30 AM for manhattan-bloomingdale location
+---------------------------------------------------------------------------------------------------------
+6)a.shortest distance with locations ID
+
+shortestdistance = FOREACH users GENERATE DOLocationID,DropOff_Street,DropOff_Area,trip_distance;
+
+
+shortest = FILTER shortestdistance BY trip_distance < 30;
+A = GROUP shortest BY (DOLocationID,DropOff_Street,DropOff_Area);
+B = FOREACH A GENERATE $0,COUNT(shortest.DOLocationID) AS COUNT;
+C = ORDER B BY COUNT DESC;
+alias = LIMIT C 10;
+
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/shortest_distance_dropoffLocations.csv';
+
+(236,Manhattan,Upper East Side North)	22755
+(161,Manhattan,Midtown Center)	22491
+(237,Manhattan,Upper East Side South)	21010
+(170,Manhattan,Murray Hill)	18642
+(230,Manhattan,Times Sq/Theatre District)	18217
+(162,Manhattan,Midtown East)	18129
+(48,Manhattan,Clinton East)	16108
+(142,Manhattan,Lincoln Square East)	15827
+(234,Manhattan,Union Sq)	15789
+(186,Manhattan,Penn Station/Madison Sq West)	15539
+
+
+(236,Manhattan,Upper East Side North),(161,Manhattan,Midtown Center) are the two locations as a shortest distance
+-----------------------------------------------------------------------------------------------------------------
+b.longest distance with locations ID
+
+longestdistance = FOREACH users GENERATE DOLocationID,DropOff_Street,DropOff_Area,trip_distance;
+longest = FILTER longestdistance BY trip_distance >=30;
+A = GROUP longest BY (DOLocationID,DropOff_Street,DropOff_Area);
+B = FOREACH A GENERATE $0,COUNT(longest.DOLocationID) AS COUNT;
+C = ORDER B BY COUNT DESC;
+alias = LIMIT C 10;
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/longest_distance_dropoffLocations.csv';
+
+(265,Unknown,NA)	166
+(1,EWR,Newark Airport)	31
+(132,Queens,JFK Airport)	19
+(230,Manhattan,Times Sq/Theatre District)	2
+(231,Manhattan,TriBeCa/Civic Center)	2
+(264,Unknown,NV)	2
+(39,Brooklyn,Canarsie)	2
+(44,Staten Island,Charleston/Tottenville)	2
+(117,Queens,Hammels/Arverne)	2
+(49,Brooklyn,Clinton Hill)	1
+
+EWR-NEWARK Airport & queens-JFK airport are the two locations as a longest distance
+-----------------------------------------------------------------------------------------------------------------
+7. peak hours for shortest distance 
+
+shortestdistance = FOREACH users GENERATE DOLocationID,DropOff_Street,DropOff_Area,trip_distance,dropoff_time;
+shortest = FILTER shortestdistance BY trip_distance < 30;
+A = GROUP shortest BY (DOLocationID,DropOff_Street,DropOff_Area,dropoff_time);
+B = FOREACH A GENERATE $0,COUNT(shortest.dropoff_time) AS COUNT;
+C = ORDER B BY COUNT DESC;
+alias = LIMIT C 10;
+
+STORE alias INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/shortest_distance_peakhours.csv';
+
+(161,Manhattan,Midtown Center,7:53 AM)	46
+(161,Manhattan,Midtown Center,8:36 AM)	44
+(236,Manhattan,Upper East Side North,6:48 PM)	44
+(161,Manhattan,Midtown Center,9:34 AM)	43
+(161,Manhattan,Midtown Center,9:51 AM)	43
+(161,Manhattan,Midtown Center,7:52 AM)	42
+(161,Manhattan,Midtown Center,7:49 AM)	42
+(161,Manhattan,Midtown Center,7:13 AM)	42
+(161,Manhattan,Midtown Center,10:01 AM)	42
+(161,Manhattan,Midtown Center,8:04 AM)	42
+
+
+Manhattan,Midtown Center-----peak hours are 7-8AM 
+-------------------------------------------------------------------------------------------------------------------
+b. peakhours for longest distance
+
+longestdistance = FOREACH users GENERATE DOLocationID,DropOff_Street,DropOff_Area,trip_distance,dropoff_time;
+longest = FILTER longestdistance BY trip_distance >=30;
+A = GROUP longest BY (DOLocationID,DropOff_Street,DropOff_Area,dropoff_time);
+B = FOREACH A GENERATE $0,COUNT(longest.dropoff_time) AS COUNT;
+C = ORDER B BY COUNT DESC;
+alias = LIMIT C 10;
+
+STORE C INTO 'hdfs://localhost:9000/Project/MapReduce1/pig_output/longest_distance_peakhoursAll.csv';
+
+265,Unknown,NA,12:39 PM)	2
+(265,Unknown,NA,7:09 PM)	2
+(265,Unknown,NA,7:43 PM)	2
+(265,Unknown,NA,9:58 AM)	2
+(117,Queens,Hammels/Arverne,10:23 AM)	1
+(117,Queens,Hammels/Arverne,6:23 PM)	1
+(109,Staten Island,Great Kills,8:55 PM)	1
+(86,Queens,Far Rockaway,4:46 PM)	1
+
+Unknown,NA peak hours are around 7-8pm
+------------------------------------------------------------------------------------------------------------------------
