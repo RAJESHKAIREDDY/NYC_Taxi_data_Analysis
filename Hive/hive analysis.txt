@@ -1,4 +1,4 @@
-hive analysis:-
+Hive analysis:-
 --------------------------------------------------------------------------
 1. how many records has each Tpep provider provided?
 2. compare the overall average total_amount per trip for every month
@@ -14,9 +14,9 @@ hive analysis:-
 12. peak hours for short trips/long trips
 
 ---------------------------------------------------------------------------------------------------
+Created Database and table:
 
 create database bigdata;
-create table taxi_temp
 
 create table taxi_temp(
 VendorID int,
@@ -46,7 +46,7 @@ ALTER TABLE taxi_temp SET TBLPROPERTIES ("skip.header.line.count"="1");
 ------------------------------------------------------------------------------------------------
 load data local inpath '/home/rajeshkaireddy/Downloads/Project1/FileName_*' into table taxi_temp;
 ---------------------------------------------------------------------------------------------------
-created another table called data
+created another table called data for pushing cleaned data into that TABLE
 
 create table if not exists data(
 VendorID int,
@@ -186,18 +186,6 @@ order by count desc;
 
 credit card  is more accessible/preffered for drives.
 -------------------------------------------------------------------------------------------------
-incomplete code work
-.drivers with most pickuptime travelled
-
-select DropOff_Area,dropoff_time,
-case when dropoff_time between '6:00AM' AND '12:00PM' then 'Morning'
-	when dropoff_time between '12:00PM' AND '6:00PM' then 'Afternoon'
-	when dropoff_time between '6:00PM' AND '12:00AM' then 'Evening'
-END AS Time_Interval,count(Time_Interval) as count from data
-group by DropOff_Area,dropoff_time,Time_Interval
-order by count DESC
-
---------------------------------------------------------------------------------------
 5. most number of pickuplocations ID in every month
 
 select PULocationID,pickup_month,pickUp_Street,pickUp_Area,pickUp_ServiceZone, count(PULocationID) AS count 
@@ -686,3 +674,4 @@ limit 10;
 +--------------+----------------------------+
 peak hours for longest trips is 7:00 AM -9:00 AM where travellers taking an arrival or departure
 --------------------------------------------------------------------------------------------------------
+
