@@ -2,16 +2,6 @@
 Pig Analysis for dropoff Locations
 --------------------------------------------------------------------------------------------------------------------
 1.average amount for every week
-2. drivers with max/min  distance travelled.
-3. most number of drop_off locations ID
-4. peakdays for dropoff locations
-5. peak hours for dropoff locations with dropff_area
-6. shortest and longest distance with locationsID ,dropoff_street,dropoff_area
-7. peak hours for shortest and longest distant locations.
-
-
------------------------------------------------------
-1.average amount for every week
 
 users = LOAD'hdfs://localhost:9000/Project/MapReduce1/Input/hive_dataset.csv' USING PigStorage(',') AS
 (VendorID:Int,pickup_date:chararray,pickup_time:chararray,pickup_month:chararray,pickup_day:chararray,dropoff_date:chararray,dropoff_time:chararray,dropoff_month:chararray,dropoff_day:chararray,passenger_count:int,

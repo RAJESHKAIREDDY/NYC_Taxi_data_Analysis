@@ -1,19 +1,5 @@
 Hive analysis:-
 --------------------------------------------------------------------------
-1. how many records has each Tpep provider provided?
-2. compare the overall average total_amount per trip for every month
-3. no: of passengers per trip- how many trips are made by each level of 'passenger_count'
-4. most preffered payment mode
-5. most number of pickuplocations ID in every month
-6. peakdates for pickup locations
-7. peakdays for pickup locations
-8. peakhours for overall  pickup locations
-9. peakhours with respect to individual pickuplocations ID
-10.find number of shortest distance & longest distance count and with respect to pickuplocations id
-11. passenger popularity  with respect to short distance and long distance
-12. peak hours for short trips/long trips
-
----------------------------------------------------------------------------------------------------
 Created Database and table:
 
 create database bigdata;
